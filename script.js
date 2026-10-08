@@ -5,6 +5,10 @@
 /* ========== 1. 순수 로직 (DOM을 건드리지 않음) ========== */
 
 const QuizCore = (function () {
+  const QUESTIONS_PER_CATEGORY = 10;
+  const CHOICES_PER_QUESTION = 4;
+  const EXPLANATION_MAX_LENGTH = 100;
+
   // 원본은 그대로 두고 섞은 새 배열을 돌려준다(Fisher–Yates).
   function shuffle(list, rng = Math.random) {
     const result = list.slice();
@@ -37,7 +41,79 @@ const QuizCore = (function () {
     return usedHint ? 0.5 : 1;
   }
 
-  return { shuffle, buildRound, scoreFor };
+  function isText(value) {
+    return typeof value === "string" && value.trim() !== "";
+  }
+
+  function validateQuestion(q, label, categoryIds) {
+    const problems = [];
+    if (!categoryIds.includes(q.category)) {
+      problems.push(`${label}: category "${q.category}"가 CATEGORIES에 없습니다.`);
+    }
+    if (!isText(q.question)) problems.push(`${label}: 문제 문장이 비어 있습니다.`);
+    if (!Array.isArray(q.choices) || q.choices.length !== CHOICES_PER_QUESTION) {
+      problems.push(`${label}: 보기는 ${CHOICES_PER_QUESTION}개여야 합니다.`);
+    } else {
+      if (!q.choices.every(isText)) problems.push(`${label}: 비어 있는 보기가 있습니다.`);
+      if (new Set(q.choices.map((choice) => String(choice).trim())).size !== q.choices.length) {
+        problems.push(`${label}: 같은 보기가 두 번 이상 있습니다.`);
+      }
+    }
+    if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= CHOICES_PER_QUESTION) {
+      problems.push(`${label}: answer는 0~3의 정수여야 합니다.`);
+    }
+    if (!isText(q.explanation)) {
+      problems.push(`${label}: 해설이 비어 있습니다.`);
+    } else {
+      if (/[\r\n]/.test(q.explanation)) problems.push(`${label}: 해설에 줄바꿈이 있습니다.`);
+      if (q.explanation.length > EXPLANATION_MAX_LENGTH) {
+        problems.push(`${label}: 해설이 ${EXPLANATION_MAX_LENGTH}자를 넘습니다.`);
+      }
+    }
+    if (!q.source || !isText(q.source.name)) problems.push(`${label}: 출처 이름이 없습니다.`);
+    if (!q.source || typeof q.source.url !== "string" || !q.source.url.startsWith("https://")) {
+      problems.push(`${label}: 출처 URL은 https://로 시작해야 합니다.`);
+    }
+    // 문항 규칙 3: "가장"이 있으면 기준과 시점(예: 2024년 기준)을 함께 적는다.
+    if (isText(q.question) && q.question.includes("가장")
+      && !(q.question.includes("기준") && /\d{4}년/.test(q.question))) {
+      problems.push(`${label}: "가장"이 있으면 기준과 시점(예: 2024년 기준)을 적어야 합니다.`);
+    }
+    return problems;
+  }
+
+  // 문항 데이터 규칙을 형식 면에서 검사하고 문제 목록을 돌려준다. 문제가 없으면 빈 배열.
+  function validateQuestions(questions, categories) {
+    if (!Array.isArray(questions)) return ["QUESTIONS가 배열이 아닙니다."];
+    if (!Array.isArray(categories)) return ["CATEGORIES가 배열이 아닙니다."];
+    const problems = [];
+    const categoryIds = categories.map((category) => category.id);
+    const expectedTotal = categoryIds.length * QUESTIONS_PER_CATEGORY;
+    if (questions.length !== expectedTotal) {
+      problems.push(`전체 문항이 ${questions.length}개입니다(${expectedTotal}개여야 합니다).`);
+    }
+    categoryIds.forEach((id) => {
+      const count = questions.filter((q) => q && q.category === id).length;
+      if (count !== QUESTIONS_PER_CATEGORY) {
+        problems.push(`${id} 문항이 ${count}개입니다(${QUESTIONS_PER_CATEGORY}개여야 합니다).`);
+      }
+    });
+    const seenIds = new Set();
+    questions.forEach((q, index) => {
+      if (!q || typeof q !== "object") {
+        problems.push(`${index + 1}번째 문항이 객체가 아닙니다.`);
+        return;
+      }
+      const label = isText(q.id) ? q.id : `${index + 1}번째 문항`;
+      if (!isText(q.id)) problems.push(`${label}: id가 없습니다.`);
+      else if (seenIds.has(q.id)) problems.push(`${label}: id가 겹칩니다.`);
+      else seenIds.add(q.id);
+      problems.push(...validateQuestion(q, label, categoryIds));
+    });
+    return problems;
+  }
+
+  return { shuffle, buildRound, scoreFor, validateQuestions };
 })();
 
 /* ========== 2. 화면 처리 ========== */
@@ -95,6 +171,12 @@ function makeSampleQuestions() {
   return list;
 }
 
+function problemsAfter(change) {
+  const questions = makeSampleQuestions();
+  change(questions);
+  return QuizCore.validateQuestions(questions, SAMPLE_CATEGORIES);
+}
+
 check("shuffle: 원소 구성이 같다", () => {
   const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   for (let seed = 1; seed <= 20; seed += 1) {
@@ -147,6 +229,31 @@ check("scoreFor: 정답 1점, 힌트 쓰고 정답 0.5점, 오답 0점", () => {
   assert(QuizCore.scoreFor(true, true) === 0.5, "정답·힌트 사용은 0.5점이어야 합니다.");
   assert(QuizCore.scoreFor(false, false) === 0, "오답은 0점이어야 합니다.");
   assert(QuizCore.scoreFor(false, true) === 0, "오답은 힌트를 써도 0점이어야 합니다.");
+});
+
+check("validateQuestions: 올바른 예시 문항에는 문제가 없다", () => {
+  const problems = QuizCore.validateQuestions(makeSampleQuestions(), SAMPLE_CATEGORIES);
+  assert(problems.length === 0, problems.join(" / "));
+});
+
+check("validateQuestions: 망가진 문항을 찾아낸다", () => {
+  const cases = [
+    ["보기 3개", (qs) => { qs[0].choices.pop(); }],
+    ["같은 보기", (qs) => { qs[0].choices[1] = qs[0].choices[0]; }],
+    ["answer 범위 밖", (qs) => { qs[0].answer = 4; }],
+    ["answer가 문자열", (qs) => { qs[0].answer = "0"; }],
+    ["출처 없음", (qs) => { delete qs[0].source; }],
+    ["출처 URL이 http", (qs) => { qs[0].source.url = "http://example.com/"; }],
+    ["해설 줄바꿈", (qs) => { qs[0].explanation = "첫 줄\n둘째 줄"; }],
+    ["해설 101자", (qs) => { qs[0].explanation = "가".repeat(101); }],
+    ["최상급에 기준·시점 없음", (qs) => { qs[0].question = "가장 큰 행성은?"; }],
+    ["id 중복", (qs) => { qs[1].id = qs[0].id; }],
+    ["없는 카테고리", (qs) => { qs[0].category = "zz"; }],
+    ["문항 39개", (qs) => { qs.pop(); }],
+  ];
+  cases.forEach(([name, change]) => {
+    assert(problemsAfter(change).length > 0, `"${name}"을 찾지 못했습니다.`);
+  });
 });
 
 // 모든 점검을 실행하고 콘솔에 결과를 찍는다. 실패한 개수를 돌려준다.
