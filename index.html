@@ -1,0 +1,58 @@
+<!-- 작성: 2026-10-08 13:36 KST -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>상식 퀴즈</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <!-- 시작 화면 -->
+    <section id="screen-start" class="screen">
+      <h1>상식 퀴즈</h1>
+      <p class="lead">카테고리를 고르세요. 한 판은 10문제입니다.</p>
+      <p id="data-error" class="notice is-error" hidden></p>
+      <div class="button-grid">
+        <button type="button" class="category-button" data-category="korean-history">한국사</button>
+        <button type="button" class="category-button" data-category="world-geography">세계지리</button>
+        <button type="button" class="category-button" data-category="science">과학</button>
+        <button type="button" class="category-button" data-category="arts-culture">예술과 문화</button>
+      </div>
+      <p class="notice">연습 모드 · 순위표에 기록되지 않음</p>
+    </section>
+
+    <!-- 퀴즈 화면 -->
+    <section id="screen-quiz" class="screen" hidden>
+      <div class="quiz-header">
+        <span id="quiz-label"></span>
+        <span id="quiz-progress"></span>
+        <span id="quiz-score"></span>
+      </div>
+      <h2 id="quiz-question" class="question"></h2>
+      <div id="choice-list" class="choice-list"></div>
+      <div id="feedback" class="feedback" hidden>
+        <p id="feedback-result" class="feedback-result"></p>
+        <p id="feedback-explanation"></p>
+        <p class="source">출처: <a id="feedback-source" href="#" target="_blank" rel="noopener noreferrer"></a></p>
+        <button id="next-button" type="button" class="primary">다음</button>
+      </div>
+    </section>
+
+    <!-- 결과 화면 -->
+    <section id="screen-result" class="screen" hidden>
+      <h2>결과</h2>
+      <p id="result-score" class="result-score"></p>
+      <p id="result-detail"></p>
+      <p id="result-practice-note" class="notice" hidden>순위표에 기록되지 않음</p>
+      <div class="button-row">
+        <button id="again-button" type="button" class="primary">같은 설정으로 다시 하기</button>
+        <button id="home-button" type="button">처음으로</button>
+      </div>
+    </section>
+  </main>
+  <script src="questions.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
