@@ -256,6 +256,12 @@ check("validateQuestions: 망가진 문항을 찾아낸다", () => {
   });
 });
 
+check("validateQuestions: 실제 문항 데이터(questions.js)에 문제가 없다", () => {
+  assert(typeof QUESTIONS !== "undefined" && typeof CATEGORIES !== "undefined", "questions.js를 불러오지 못했습니다.");
+  const problems = QuizCore.validateQuestions(QUESTIONS, CATEGORIES);
+  assert(problems.length === 0, problems.join(" / "));
+});
+
 // 모든 점검을 실행하고 콘솔에 결과를 찍는다. 실패한 개수를 돌려준다.
 function runSelfTest() {
   const failures = [];
