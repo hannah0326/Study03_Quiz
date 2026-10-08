@@ -118,6 +118,181 @@ const QuizCore = (function () {
 
 /* ========== 2. 화면 처리 ========== */
 
+// 모드별 차이는 이 설정에만 둔다. 퀴즈 흐름은 하나이고 이 값으로만 분기한다.
+const MODES = {
+  practice: { name: "연습", timeLimit: null, hint: false, ranked: false, retry: true },
+};
+
+// 진행 상태는 이 객체 하나에 둔다.
+const state = {
+  mode: "practice",
+  categoryId: null,
+  round: [],
+  index: 0,
+  score: 0,
+  correctCount: 0,
+  wrongIds: [],
+  usedHint: false,
+  answered: false,
+  finished: false,
+};
+
+function byId(id) {
+  return document.getElementById(id);
+}
+
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach((section) => {
+    section.hidden = section.id !== `screen-${name}`;
+  });
+  window.scrollTo(0, 0);
+}
+
+function categoryName(categoryId) {
+  const found = CATEGORIES.find((category) => category.id === categoryId);
+  return found ? found.name : categoryId;
+}
+
+function formatScore(value) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+// 문항 데이터에 문제가 있으면 화면에 띄울 문구를, 없으면 빈 문자열을 돌려준다.
+function dataProblem() {
+  if (typeof QUESTIONS === "undefined" || typeof CATEGORIES === "undefined") {
+    console.error("questions.js를 불러오지 못했습니다.");
+    return "문항 데이터를 불러오지 못했습니다";
+  }
+  const problems = QuizCore.validateQuestions(QUESTIONS, CATEGORIES);
+  if (problems.length > 0) {
+    console.error("문항 데이터 오류:");
+    problems.forEach((problem) => console.error(`- ${problem}`));
+    return "문항 데이터 오류";
+  }
+  return "";
+}
+
+function initApp() {
+  const problem = dataProblem();
+  if (problem) {
+    byId("data-error").textContent = problem;
+    byId("data-error").hidden = false;
+    document.querySelectorAll("#screen-start button").forEach((button) => {
+      button.disabled = true;
+    });
+    showScreen("start");
+    return;
+  }
+  document.querySelectorAll("[data-category]").forEach((button) => {
+    button.addEventListener("click", () => startRound(button.dataset.category, "practice"));
+  });
+  byId("next-button").addEventListener("click", goNext);
+  byId("again-button").addEventListener("click", () => startRound(state.categoryId, state.mode));
+  byId("home-button").addEventListener("click", goHome);
+  showScreen("start");
+}
+
+function startRound(categoryId, mode) {
+  Object.assign(state, {
+    categoryId,
+    mode,
+    round: QuizCore.buildRound(QUESTIONS, categoryId),
+    index: 0,
+    score: 0,
+    correctCount: 0,
+    wrongIds: [],
+    finished: false,
+  });
+  showScreen("quiz");
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const question = state.round[state.index];
+  const mode = MODES[state.mode];
+  state.answered = false;
+  state.usedHint = false;
+  byId("quiz-label").textContent = `${categoryName(state.categoryId)} · ${mode.name}`;
+  byId("quiz-progress").textContent = `${state.index + 1} / ${state.round.length}`;
+  renderScoreLine();
+  byId("quiz-question").textContent = question.question;
+  const list = byId("choice-list");
+  list.replaceChildren();
+  question.choices.forEach((text, i) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "choice";
+    button.textContent = text;
+    button.addEventListener("click", () => handleAnswer(i));
+    list.appendChild(button);
+  });
+  byId("feedback").hidden = true;
+}
+
+function renderScoreLine() {
+  byId("quiz-score").textContent = `점수 ${formatScore(state.score)}`;
+}
+
+function handleAnswer(choiceIndex) {
+  // 연타는 무시한다. 채점은 문항마다 한 번만 한다.
+  if (state.answered) return;
+  state.answered = true;
+  const question = state.round[state.index];
+  const isCorrect = choiceIndex === question.answer;
+  state.score += QuizCore.scoreFor(isCorrect, state.usedHint);
+  if (isCorrect) {
+    state.correctCount += 1;
+  } else {
+    state.wrongIds.push(question.id);
+  }
+  renderFeedback(choiceIndex, isCorrect);
+}
+
+function renderFeedback(choiceIndex, isCorrect) {
+  const question = state.round[state.index];
+  byId("choice-list").querySelectorAll(".choice").forEach((button, i) => {
+    button.disabled = true;
+    if (i === question.answer) button.classList.add("is-correct");
+    else if (i === choiceIndex) button.classList.add("is-wrong");
+  });
+  const result = byId("feedback-result");
+  result.textContent = isCorrect ? "정답!" : "오답";
+  result.className = `feedback-result ${isCorrect ? "is-correct" : "is-wrong"}`;
+  byId("feedback-explanation").textContent = question.explanation;
+  const link = byId("feedback-source");
+  link.textContent = question.source.name;
+  link.href = question.source.url;
+  const isLast = state.index === state.round.length - 1;
+  byId("next-button").textContent = isLast ? "결과 보기" : "다음";
+  byId("feedback").hidden = false;
+  renderScoreLine();
+}
+
+function goNext() {
+  // 답하기 전이거나 이미 결과를 냈으면 무시한다(버튼 연타 방지).
+  if (!state.answered || state.finished) return;
+  if (state.index < state.round.length - 1) {
+    state.index += 1;
+    renderQuestion();
+  } else {
+    renderResult();
+  }
+}
+
+function renderResult() {
+  const mode = MODES[state.mode];
+  const total = state.round.length;
+  state.finished = true;
+  byId("result-score").textContent = `${formatScore(state.score)} / ${total}점`;
+  byId("result-detail").textContent = `맞힌 문항 ${state.correctCount}개`;
+  byId("result-practice-note").hidden = mode.ranked;
+  showScreen("result");
+}
+
+function goHome() {
+  showScreen("start");
+}
+
 /* ========== 3. 자체 점검 (index.html?test 또는 점검 명령으로 실행) ========== */
 
 const SELF_CHECKS = [];
@@ -280,7 +455,8 @@ function runSelfTest() {
 
 /* ========== 4. 시작 ========== */
 
-// 브라우저에서 index.html로 열었을 때만 실행한다(점검 명령에서는 건너뜀).
+// 브라우저에서 index.html로 열었을 때만 화면 처리를 시작한다(점검 명령에서는 건너뜀).
 if (typeof document !== "undefined" && document.getElementById("screen-start")) {
+  initApp();
   if (new URLSearchParams(window.location.search).has("test")) runSelfTest();
 }
