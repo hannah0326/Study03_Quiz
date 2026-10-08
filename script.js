@@ -15,7 +15,29 @@ const QuizCore = (function () {
     return result;
   }
 
-  return { shuffle };
+  // 보기 위치를 섞고 정답 위치(answer)를 새 위치로 고친 사본을 돌려준다.
+  function shuffleChoices(question, rng) {
+    const order = shuffle(question.choices.map((_, i) => i), rng);
+    return {
+      ...question,
+      choices: order.map((i) => question.choices[i]),
+      answer: order.indexOf(question.answer),
+    };
+  }
+
+  // 한 판에 쓸 문항: 해당 카테고리 문항의 순서와 보기 위치를 섞는다.
+  function buildRound(questions, categoryId, rng = Math.random) {
+    const picked = questions.filter((question) => question.category === categoryId);
+    return shuffle(picked, rng).map((question) => shuffleChoices(question, rng));
+  }
+
+  // 오답 0점, 힌트 쓰고 정답 0.5점, 그 외 정답 1점.
+  function scoreFor(isCorrect, usedHint) {
+    if (!isCorrect) return 0;
+    return usedHint ? 0.5 : 1;
+  }
+
+  return { shuffle, buildRound, scoreFor };
 })();
 
 /* ========== 2. 화면 처리 ========== */
@@ -47,6 +69,32 @@ function seededRng(seed) {
   };
 }
 
+// 점검용 예시 데이터: 카테고리 4개 × 10문항, 정답은 항상 0번.
+const SAMPLE_CATEGORIES = [
+  { id: "a", name: "가" },
+  { id: "b", name: "나" },
+  { id: "c", name: "다" },
+  { id: "d", name: "라" },
+];
+
+function makeSampleQuestions() {
+  const list = [];
+  SAMPLE_CATEGORIES.forEach((category) => {
+    for (let n = 1; n <= 10; n += 1) {
+      list.push({
+        id: `${category.id}-${n}`,
+        category: category.id,
+        question: `${category.name} 문제 ${n}`,
+        choices: [`정답${n}`, `오답${n}-1`, `오답${n}-2`, `오답${n}-3`],
+        answer: 0,
+        explanation: `${category.name} 해설 ${n}`,
+        source: { name: "예시 출처", url: "https://example.com/" },
+      });
+    }
+  });
+  return list;
+}
+
 check("shuffle: 원소 구성이 같다", () => {
   const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   for (let seed = 1; seed <= 20; seed += 1) {
@@ -67,6 +115,38 @@ check("shuffle: 실제로 순서를 바꾼다", () => {
     if (QuizCore.shuffle(list, seededRng(seed)).join(",") !== list.join(",")) changed = true;
   }
   assert(changed, "20번 섞는 동안 순서가 한 번도 바뀌지 않았습니다.");
+});
+
+check("buildRound: 해당 카테고리 10문항만 나온다", () => {
+  const round = QuizCore.buildRound(makeSampleQuestions(), "b", seededRng(3));
+  assert(round.length === 10, `문항이 ${round.length}개입니다.`);
+  assert(round.every((q) => q.category === "b"), "다른 카테고리 문항이 섞였습니다.");
+  assert(new Set(round.map((q) => q.id)).size === 10, "같은 문항이 두 번 나왔습니다.");
+});
+
+check("buildRound: 섞은 뒤에도 choices[answer]가 원래 정답이다", () => {
+  const originals = makeSampleQuestions();
+  for (let seed = 1; seed <= 20; seed += 1) {
+    QuizCore.buildRound(originals, "c", seededRng(seed)).forEach((q) => {
+      const original = originals.find((o) => o.id === q.id);
+      assert(q.choices[q.answer] === original.choices[original.answer], `${q.id}의 정답이 바뀌었습니다.`);
+      assert(sameItems(q.choices, original.choices), `${q.id}의 보기 구성이 바뀌었습니다.`);
+    });
+  }
+});
+
+check("buildRound: 원본 문항을 바꾸지 않는다", () => {
+  const originals = makeSampleQuestions();
+  const before = JSON.stringify(originals);
+  QuizCore.buildRound(originals, "a", seededRng(5));
+  assert(JSON.stringify(originals) === before, "원본 문항이 바뀌었습니다.");
+});
+
+check("scoreFor: 정답 1점, 힌트 쓰고 정답 0.5점, 오답 0점", () => {
+  assert(QuizCore.scoreFor(true, false) === 1, "정답·힌트 없음은 1점이어야 합니다.");
+  assert(QuizCore.scoreFor(true, true) === 0.5, "정답·힌트 사용은 0.5점이어야 합니다.");
+  assert(QuizCore.scoreFor(false, false) === 0, "오답은 0점이어야 합니다.");
+  assert(QuizCore.scoreFor(false, true) === 0, "오답은 힌트를 써도 0점이어야 합니다.");
 });
 
 // 모든 점검을 실행하고 콘솔에 결과를 찍는다. 실패한 개수를 돌려준다.
