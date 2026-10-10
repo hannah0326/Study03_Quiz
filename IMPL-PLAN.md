@@ -1,4 +1,5 @@
 <!-- 작성: 2026-10-08 12:35 KST -->
+<!-- 수정: 2026-10-10 22:10 KST — 2단계에 Task 13(결과 화면의 문항별 결과 목록)을 넣고 뒤 태스크 번호를 하나씩 미룸 -->
 
 # 상식 퀴즈 웹 앱 구현 계획서 (IMPL-PLAN)
 
@@ -23,9 +24,9 @@
 - `index.html`은 `questions.js`를 `script.js`보다 먼저 일반 `<script>`로 불러온다. `fetch()`, JSON 파일, ES 모듈(`import`)은 `file://`에서 막히므로 쓰지 않는다.
 - 새로 만드는 파일의 첫 줄에 작성 날짜·시각을 대한민국 표준시로 적는다. 시각은 `date -u -d "+9 hours" "+%Y-%m-%d %H:%M"`으로 얻는다. 예: `// 작성: 2026-10-08 12:35 KST`, `/* 작성: ... KST */`, `<!-- 작성: ... KST -->`
 - 코드 주석, 화면 문구, 커밋 메시지는 한국어로 쓴다(식별자·명령어 제외).
-- 화면 문구는 PRD.md와 글자까지 같게 쓴다: "순위표에 기록되지 않음", "정답!", "오답", "시간 초과", "결과 보기", "다음", "틀린 문제만 다시 풀기", "같은 설정으로 다시 하기", "처음으로", "문항 데이터를 불러오지 못했습니다", "문항 데이터 오류", "이 브라우저에서는 기록을 저장할 수 없습니다", "아직 기록이 없습니다", "10위 안에 들지 못했습니다".
+- 화면 문구는 PRD.md와 글자까지 같게 쓴다: "순위표에 기록되지 않음", "정답!", "오답", "시간 초과", "정답", "정답 (힌트 0.5점)", "문항별 결과", "고른 답: 없음", "결과 보기", "다음", "틀린 문제만 다시 풀기", "같은 설정으로 다시 하기", "처음으로", "문항 데이터를 불러오지 못했습니다", "문항 데이터 오류", "이 브라우저에서는 기록을 저장할 수 없습니다", "아직 기록이 없습니다", "10위 안에 들지 못했습니다".
 - 사용자 입력이 아닌 문항 문자열도 화면에는 `textContent`로만 넣는다(`innerHTML` 금지).
-- **단계 경계에서 멈춘다.** Task 7(1단계 끝), Task 13(2단계 끝), Task 17(3단계 끝)에서 사용자가 브라우저 확인을 마치고 다음 단계를 지시할 때까지 다음 태스크를 시작하지 않는다.
+- **단계 경계에서 멈춘다.** Task 7(1단계 끝), Task 14(2단계 끝), Task 18(3단계 끝)에서 사용자가 브라우저 확인을 마치고 다음 단계를 지시할 때까지 다음 태스크를 시작하지 않는다.
 - **계획과 다르게 정해야 할 일이 생기면 정하기 전에 사용자에게 먼저 묻는다.** 묻지 않고 정한 뒤 보고하지 않는다.
 - 커밋은 git 저장소가 있을 때 각 태스크의 마지막 단계에서 한다. 커밋 메시지 끝에는 `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` 줄을 붙인다. 저장소가 없으면 커밋 단계는 건너뛰고 점검 명령 통과로 태스크를 마친다.
 
@@ -45,11 +46,11 @@ node -e 'const fs=require("fs"),vm=require("vm");const ctx=vm.createContext({con
 
 PRD가 직접 말하지 않았지만 사용자가 가장 먼저 부딪힐 입력과 상황이다. 각 줄의 확인은 담당 태스크에 들어 있다.
 
-1. **같은 버튼 연타**(보기, [다음], [결과 보기]) — 채점·결과·순위 기록은 한 번만 일어나야 한다. → `state.answered`, `state.finished` 가드(Task 6), 확인 항목 1-8·3-4(Task 7, 17)
-2. **스피드 모드에서 0초가 되는 순간의 클릭** — 먼저 일어난 쪽만 채점하고, 해설 중에는 남은 초가 멈춰야 한다. → `handleAnswer`의 가드와 `stopTimer`(Task 10), 확인 항목 2-5(Task 13)
+1. **같은 버튼 연타**(보기, [다음], [결과 보기]) — 채점·결과·순위 기록은 한 번만 일어나야 한다. → `state.answered`, `state.finished` 가드(Task 6), 확인 항목 1-8·3-4(Task 7, 18)
+2. **스피드 모드에서 0초가 되는 순간의 클릭** — 먼저 일어난 쪽만 채점하고, 해설 중에는 남은 초가 멈춰야 한다. → `handleAnswer`의 가드와 `stopTimer`(Task 10), 확인 항목 2-5(Task 14)
 3. **`questions.js`를 고치다 낸 실수**(보기 3개, `http://` 출처, 기준 없는 "가장") — 앱이 멈추지 않고 시작 화면에 "문항 데이터 오류"를 띄우고 콘솔에 문제 목록을 찍어야 한다. → `validateQuestions` 점검(Task 3), `dataProblem`(Task 6), 확인 항목 1-10·1-11(Task 7)
-4. **깨졌거나 쓸 수 없는 localStorage** — 퀴즈는 계속되고, 깨진 값은 빈 순위표로, 쓸 수 없으면 안내 문구를 보여야 한다. → `parseBoard` 점검(Task 14), `loadBoard`/`saveRecord`(Task 15), 확인 항목 3-9·3-10(Task 17)
-5. **답한 뒤 또는 두 번째로 누른 [힌트]** — 아무 일도 일어나지 않아야 하고, 다음 문항에서는 다시 쓸 수 있어야 한다. → `useHint` 가드(Task 11), 확인 항목 2-7(Task 13)
+4. **깨졌거나 쓸 수 없는 localStorage** — 퀴즈는 계속되고, 깨진 값은 빈 순위표로, 쓸 수 없으면 안내 문구를 보여야 한다. → `parseBoard` 점검(Task 15), `loadBoard`/`saveRecord`(Task 16), 확인 항목 3-9·3-10(Task 18)
+5. **답한 뒤 또는 두 번째로 누른 [힌트]** — 아무 일도 일어나지 않아야 하고, 다음 문항에서는 다시 쓸 수 있어야 한다. → `useHint` 가드(Task 11), 확인 항목 2-7(Task 14)
 
 ---
 
@@ -59,8 +60,8 @@ PRD가 직접 말하지 않았지만 사용자가 가장 먼저 부딪힐 입력
 |---|---|---|
 | `questions.js` | `CATEGORIES`(카테고리 4개)와 `QUESTIONS`(문항 40개). 데이터만 둔다. | Task 1(뼈대), Task 4(문항) |
 | `script.js` | ① `QuizCore` 순수 로직 ② 화면 처리 ③ 자체 점검 ④ 시작 코드 | Task 1부터 계속 |
-| `index.html` | 화면 `<section>`들. 1·2·3단계마다 전체를 새 판으로 바꾼다. | Task 5, 9, 15 |
-| `style.css` | 화면 배치, 정답·오답 색, 힌트로 지운 보기, 순위표 | Task 5, 9, 16 |
+| `index.html` | 화면 `<section>`들. 1·2·3단계마다 전체를 새 판으로 바꾼다(Task 13은 결과 화면에 목록만 더한다). | Task 5, 9, 13, 16 |
+| `style.css` | 화면 배치, 정답·오답 색, 힌트로 지운 보기, 결과 목록, 순위표 | Task 5, 9, 13, 17 |
 
 `script.js`의 전체 모양(3단계 완료 시):
 
@@ -90,8 +91,8 @@ if (typeof document !== "undefined" && document.getElementById("screen-start")) 
 | 단계 | 태스크 | 만드는 것 | 멈추는 곳 |
 |---|---|---|---|
 | 1. 연습 모드와 점수 | 1~7 | 자체 점검 틀, `shuffle`·`buildRound`·`scoreFor`·`validateQuestions`, 문항 40개, 시작·퀴즈·결과 화면 | Task 7 |
-| 2. 스피드 모드, 힌트 모드, 틀린 문제 다시 풀기 | 8~13 | `pickHintRemovals`, 모드 선택 화면, 15초 타이머, 힌트, 다시 풀기 | Task 13 |
-| 3. 점수 저장과 순위표 | 14~17 | `addRecord`·`parseBoard`, 결과 저장과 순위 표시, 순위표 화면 | Task 17 |
+| 2. 스피드 모드, 힌트 모드, 틀린 문제 다시 풀기 | 8~14 | `pickHintRemovals`, 모드 선택 화면, 15초 타이머, 힌트, 다시 풀기, 결과 화면의 문항별 결과 | Task 14 |
+| 3. 점수 저장과 순위표 | 15~18 | `addRecord`·`parseBoard`, 결과 저장과 순위 표시, 순위표 화면 | Task 18 |
 
 ---
 
@@ -1182,9 +1183,9 @@ git commit -m "1단계: 연습 모드 진행(문항 표시, 채점, 해설, 결�
 
 ### 만들 것
 
-- `script.js`: `QuizCore.pickHintRemovals`와 점검, `MODES`의 스피드·힌트, 모드 선택 화면 처리, 15초 타이머, 힌트, 틀린 문제 다시 풀기
-- `index.html`: 모드 선택 화면 추가, 퀴즈 화면에 타이머·[힌트], 결과 화면에 [틀린 문제만 다시 풀기]. 시작 화면의 "연습 모드 · 순위표에 기록되지 않음"은 모드 선택 화면의 연습 버튼으로 옮긴다.
-- `style.css`: 모드 버튼, 타이머, 힌트로 지운 보기(취소선 + 흐리게)
+- `script.js`: `QuizCore.pickHintRemovals`와 점검, `MODES`의 스피드·힌트, 모드 선택 화면 처리, 15초 타이머, 힌트, 틀린 문제 다시 풀기, 결과 화면의 문항별 결과(`state.results`, `renderResultList`)
+- `index.html`: 모드 선택 화면 추가, 퀴즈 화면에 타이머·[힌트], 결과 화면에 [틀린 문제만 다시 풀기]와 "문항별 결과" 목록. 시작 화면의 "연습 모드 · 순위표에 기록되지 않음"은 모드 선택 화면의 연습 버튼으로 옮긴다.
+- `style.css`: 모드 버튼, 타이머, 힌트로 지운 보기(취소선 + 흐리게), 문항별 결과 목록
 
 ### 완료 기준 (실행자가 확인)
 
@@ -1192,6 +1193,7 @@ git commit -m "1단계: 연습 모드 진행(문항 표시, 채점, 해설, 결�
 - [ ] `MODES`에 `practice`, `speed`, `hint` 세 모드가 PRD 2절 표와 같은 값으로 있다.
 - [ ] `handleAnswer`가 맨 앞에서 `state.answered`를 확인하고 `stopTimer()`를 부른다.
 - [ ] 화면을 떠나거나 새 판을 시작하는 모든 길(`beginRound`, `goHome`)에서 `stopTimer()`를 부른다.
+- [ ] `state.results`는 `handleAnswer`의 `state.answered` 가드 아래에서만 늘어나 문항마다 한 번만 기록되고, `beginRound`에서 비워진다.
 
 ### 브라우저에서 직접 확인할 항목 (사용자)
 
@@ -1207,7 +1209,10 @@ git commit -m "1단계: 연습 모드 진행(문항 표시, 채점, 해설, 결�
 2-10. [틀린 문제만 다시 풀기]를 누르면 위쪽에 "· 다시 풀기"와 "1 / 틀린 개수", 점수 대신 "맞힌 수 0"이 보이고 틀린 문항만 나온다.
 2-11. 다시 풀기 결과는 "맞힌 수 / 푼 수"로 나온다. 또 틀린 문제가 있으면 버튼이 다시 나오고, 모두 맞히면 버튼이 사라진다.
 2-12. 다시 풀기 결과 화면에서 [같은 설정으로 다시 하기]를 누르면 같은 카테고리 10문항 전체가 "점수 0"부터 시작한다.
-2-13. 주소 끝에 `?test`를 붙여 열고 콘솔에서 "자체 점검: 11개 중 11개 통과"를 확인한다.
+2-13. 세 모드 모두 결과 화면의 버튼 아래에 "문항별 결과"와 10문항 목록이 푼 순서대로 나온다. 문항마다 문제, 결과, "고른 답: …", "정답: …", 해설이 보인다.
+2-14. 결과 문구가 맞다. 맞힌 문항은 초록색 "정답", 힌트를 쓰고 맞힌 문항은 초록색 "정답 (힌트 0.5점)", 틀린 문항은 빨간색 "오답", 스피드 모드에서 시간이 지난 문항은 빨간색 "시간 초과"와 "고른 답: 없음"이다.
+2-15. 다시 풀기 결과 화면의 목록에는 다시 푼 문항만 나온다. 그 뒤 [같은 설정으로 다시 하기]로 새 판을 끝내면 목록은 새 판의 10문항으로 바뀐다.
+2-16. 주소 끝에 `?test`를 붙여 열고 콘솔에서 "자체 점검: 11개 중 11개 통과"를 확인한다.
 
 ---
 
@@ -1787,7 +1792,148 @@ git commit -m "2단계: 연습 모드의 틀린 문제만 다시 풀기 추가" 
 
 ---
 
-### Task 13: 2단계 마무리 — 확인 후 멈춤
+### Task 13: 결과 화면의 문항별 결과 목록
+
+**Files:**
+- Modify: `index.html` (결과 화면에 목록 추가)
+- Modify: `style.css` (끝에 결과 목록 블록 추가)
+- Modify: `script.js` (② 화면 처리)
+
+**Interfaces:**
+- Consumes: Task 10의 `handleAnswer`(`choiceIndex`가 `null`이면 시간 초과), Task 11의 `state.usedHint`, Task 12의 `beginRound`와 `renderResult`
+- Produces: `state.results`(푼 순서대로 `{ question, choiceIndex, isCorrect, usedHint }`), `resultLabel(item)`, `renderResultList()`. 요소 id `result-list`. CSS 클래스 `.result-list-title`, `.result-list`, `.result-item`, `.result-question`, `.result-status`, `.result-explanation`
+
+- [ ] **Step 1: `index.html`의 결과 화면에 목록 자리를 넣는다**
+
+결과 화면의 `button-row` 블록을 닫는 `</div>` 줄과 `</section>` 줄 사이에 넣는다.
+
+```html
+      <h3 class="result-list-title">문항별 결과</h3>
+      <ol id="result-list" class="result-list"></ol>
+```
+
+- [ ] **Step 2: `style.css` 끝에 결과 목록 블록을 붙인다**
+
+```css
+/* ---- 2단계: 결과 화면의 문항별 결과 ---- */
+
+.result-list-title {
+  margin: 28px 0 8px;
+  font-size: 1.05rem;
+}
+
+.result-list {
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+.result-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-item p {
+  margin: 2px 0;
+}
+
+.result-question {
+  font-weight: 600;
+}
+
+.result-status {
+  font-weight: 700;
+}
+
+.result-status.is-correct {
+  color: var(--correct);
+}
+
+.result-status.is-wrong {
+  color: var(--wrong);
+}
+
+.result-explanation {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+```
+
+- [ ] **Step 3: 상태에 문항별 결과를 넣는다**
+
+`state`와 `beginRound`의 `Object.assign` 두 곳 모두 `wrongIds: [],` 줄 아래에 넣는다. 새 판(다시 풀기 판 포함)을 시작할 때마다 목록이 비워진다.
+
+```js
+    results: [],
+```
+
+`handleAnswer`의 `if (isCorrect) { ... } else { ... }` 블록 바로 아래, `renderFeedback(choiceIndex, isCorrect);` 줄 위에 넣는다. `question`은 보기를 섞은 뒤의 문항이므로 `choices[choiceIndex]`와 `choices[answer]`가 화면에 보인 보기와 같다.
+
+```js
+  state.results.push({ question, choiceIndex, isCorrect, usedHint: state.usedHint });
+```
+
+- [ ] **Step 4: 목록을 그리는 함수를 ② 화면 처리 끝에 넣는다**
+
+```js
+// 결과 목록에 쓸 문구. 시간 초과는 choiceIndex가 null이다.
+function resultLabel(item) {
+  if (item.isCorrect) return item.usedHint ? "정답 (힌트 0.5점)" : "정답";
+  return item.choiceIndex === null ? "시간 초과" : "오답";
+}
+
+// 이번 판에 푼 순서대로 문항별 결과를 그린다. 문항 문자열은 textContent로만 넣는다.
+function renderResultList() {
+  const list = byId("result-list");
+  list.replaceChildren();
+  state.results.forEach((item) => {
+    const { question, choiceIndex } = item;
+    const lines = [
+      ["result-question", question.question],
+      [`result-status ${item.isCorrect ? "is-correct" : "is-wrong"}`, resultLabel(item)],
+      ["", `고른 답: ${choiceIndex === null ? "없음" : question.choices[choiceIndex]}`],
+      ["", `정답: ${question.choices[question.answer]}`],
+      ["result-explanation", question.explanation],
+    ];
+    const li = document.createElement("li");
+    li.className = "result-item";
+    lines.forEach(([className, text]) => {
+      const line = document.createElement("p");
+      if (className) line.className = className;
+      line.textContent = text;
+      li.append(line);
+    });
+    list.append(li);
+  });
+}
+```
+
+- [ ] **Step 5: 결과 화면에서 부른다**
+
+`renderResult`의 `showScreen("result");` 줄 바로 위에 넣는다.
+
+```js
+  renderResultList();
+```
+
+- [ ] **Step 6: 점검 명령을 돌린다**
+
+Run: 점검 명령
+Expected: PASS. `자체 점검: 11개 중 11개 통과`
+
+- [ ] **Step 7: id를 대조한다**
+
+`grep -o 'byId("[a-z-]*")' script.js | sort -u`로 뽑은 id에 `result-list`가 있고, `index.html`에도 같은 id가 있는지 확인한다.
+
+- [ ] **Step 8: 커밋**
+
+```bash
+git add index.html style.css script.js
+git commit -m "2단계: 결과 화면에 문항별 결과 목록(문제, 결과, 고른 답, 정답, 해설) 추가" -m "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
+```
+
+---
+
+### Task 14: 2단계 마무리 — 확인 후 멈춤
 
 **Files:** 없음(확인만)
 
@@ -1797,11 +1943,11 @@ git commit -m "2단계: 연습 모드의 틀린 문제만 다시 풀기 추가" 
 
 - [ ] **Step 2: 사용자에게 보고하고 멈춘다**
 
-다음을 보고하고 **멈춘다.** 사용자가 다음 단계를 지시하기 전에는 Task 14를 시작하지 않는다.
+다음을 보고하고 **멈춘다.** 사용자가 다음 단계를 지시하기 전에는 Task 15를 시작하지 않는다.
 
 - 만든 것과 커밋 목록
 - 점검 명령 결과
-- 2단계 "브라우저에서 직접 확인할 항목" 2-1~2-13(그대로 복사). 1단계 항목 1-3~1-8도 연습 모드에서 다시 확인해 달라고 적는다.
+- 2단계 "브라우저에서 직접 확인할 항목" 2-1~2-16(그대로 복사). 1단계 항목 1-3~1-8도 연습 모드에서 다시 확인해 달라고 적는다.
 - 계획과 다르게 한 것이 있으면 그 목록(없으면 "없음")
 
 ---
@@ -1837,7 +1983,7 @@ git commit -m "2단계: 연습 모드의 틀린 문제만 다시 풀기 추가" 
 
 ---
 
-### Task 14: `addRecord`와 `parseBoard`
+### Task 15: `addRecord`와 `parseBoard`
 
 **Files:**
 - Modify: `script.js` (① `QuizCore`, ③ 자체 점검)
@@ -1967,7 +2113,7 @@ git commit -m "3단계: 기록 정렬(addRecord)과 저장값 읽기(parseBoard)
 
 ---
 
-### Task 15: 결과 저장과 순위 표시
+### Task 16: 결과 저장과 순위 표시
 
 **Files:**
 - Modify: `index.html` (3단계 판으로 전체 교체)
@@ -1979,7 +2125,7 @@ git commit -m "3단계: 기록 정렬(addRecord)과 저장값 읽기(parseBoard)
 
 - [ ] **Step 1: `index.html`을 3단계 판으로 바꾼다**
 
-첫 줄의 작성 시각 주석은 그대로 두고, 나머지를 다음과 같게 만든다(시작 화면 [순위표 보기], 결과 화면 세 요소, 순위표 화면 추가).
+첫 줄의 작성 시각 주석은 그대로 두고, 나머지를 다음과 같게 만든다(시작 화면 [순위표 보기], 결과 화면 세 요소, 순위표 화면 추가. Task 13의 "문항별 결과" 목록은 그대로 둔다).
 
 ```html
 <!DOCTYPE html>
@@ -2063,6 +2209,8 @@ git commit -m "3단계: 기록 정렬(addRecord)과 저장값 읽기(parseBoard)
         <button id="again-button" type="button" class="primary">같은 설정으로 다시 하기</button>
         <button id="home-button" type="button">처음으로</button>
       </div>
+      <h3 class="result-list-title">문항별 결과</h3>
+      <ol id="result-list" class="result-list"></ol>
     </section>
 
     <!-- 순위표 화면 -->
@@ -2178,14 +2326,14 @@ git commit -m "3단계: 스피드·힌트 결과 저장과 순위 표시 추가"
 
 ---
 
-### Task 16: 순위표 화면
+### Task 17: 순위표 화면
 
 **Files:**
 - Modify: `script.js` (② 화면 처리)
 - Modify: `style.css` (끝에 3단계 블록 추가)
 
 **Interfaces:**
-- Consumes: `loadBoard`, `formatScore`, `CATEGORIES`, Task 15의 요소 id
+- Consumes: `loadBoard`, `formatScore`, `CATEGORIES`, Task 16의 요소 id
 - Produces: `fillBoardCategories()`, `openBoard(mode, categoryId)`, `renderBoard()`, `formatDate(iso) → "YYYY-MM-DD HH:MM"`(사용자 컴퓨터 시간대)
 
 - [ ] **Step 1: 순위표 함수를 ② 화면 처리 끝에 넣는다**
@@ -2307,7 +2455,7 @@ git commit -m "3단계: 순위표 화면 추가" -m "Co-Authored-By: Claude Opus
 
 ---
 
-### Task 17: 3단계 마무리 — 확인 후 멈춤
+### Task 18: 3단계 마무리 — 확인 후 멈춤
 
 **Files:** 없음(확인만)
 
@@ -2334,18 +2482,18 @@ git commit -m "3단계: 순위표 화면 추가" -m "Co-Authored-By: Claude Opus
 | 2.1 | 연습 모드(1점, 순위표 미기록 안내, 틀린 문제 다시 풀기) | 6, 9, 12 |
 | 2.2 | 스피드 모드(15초, 시간 초과 오답, 해설 중 정지, `Date.now()` 계산) | 10 |
 | 2.3 | 힌트 모드(오답 2개 취소선 + 흐리게, 1번, 0.5점) | 8, 11 |
-| 3.1 | 시작 화면(1단계 바로 시작, 2단계 모드 선택으로, 3단계 [순위표 보기]) | 5, 6, 9, 15, 16 |
+| 3.1 | 시작 화면(1단계 바로 시작, 2단계 모드 선택으로, 3단계 [순위표 보기]) | 5, 6, 9, 16, 17 |
 | 3.2 | 모드 선택 화면(규칙 한 줄, 연습 안내, [뒤로]) | 9 |
 | 3.3 | 퀴즈 화면(진행, 점수, 정답·오답 색, 해설, 출처 링크, [다음]/[결과 보기]) | 5, 6 |
-| 3.4 | 결과 화면(점수, 안내, 다시 풀기, 자동 저장과 순위, 버튼) | 6, 12, 15 |
-| 3.5 | 순위표 화면(두 입구, 기본 선택, 표, 빈 표 안내) | 15, 16 |
+| 3.4 | 결과 화면(점수, 안내, 다시 풀기, 문항별 결과, 자동 저장과 순위, 버튼) | 6, 12, 13, 16 |
+| 3.5 | 순위표 화면(두 입구, 기본 선택, 표, 빈 표 안내) | 16, 17 |
 | 4 | 파일 4개, 첫 줄 KST, 외부 도구 없음 | 전역 제약, 1, 5 |
 | 5.1~5.3 | 문항 데이터 형식, 문항 규칙, 작성 절차 | 3, 4 |
-| 6.1 | `QuizCore` 함수 7개 | 1, 2, 3, 8, 14 |
-| 6.2 | `MODES`, `state`, 화면 함수, `stopTimer` 호출 | 6, 9, 10, 11, 12 |
-| 6.3 | 데이터 흐름(채점 한 번, 타이머 정지) | 6, 10 |
-| 6.4, 9.1 | 자체 점검(`index.html?test`), 점검 항목 | 1, 2, 3, 4, 8, 14 |
-| 7 | 순위표 저장(`quiz.leaderboard.v1`, 10개, 최근 우선, 이름 없음) | 14, 15 |
-| 8 | 오류 처리 5가지 | 6, 10, 14, 15, 16 |
-| 9.2, 10 | 직접 확인, 단계별 완료 기준 | 7, 13, 17 |
+| 6.1 | `QuizCore` 함수 7개 | 1, 2, 3, 8, 15 |
+| 6.2 | `MODES`, `state`, 화면 함수, `stopTimer` 호출 | 6, 9, 10, 11, 12, 13 |
+| 6.3 | 데이터 흐름(채점 한 번, 타이머 정지, 문항별 결과 기록) | 6, 10, 13 |
+| 6.4, 9.1 | 자체 점검(`index.html?test`), 점검 항목 | 1, 2, 3, 4, 8, 15 |
+| 7 | 순위표 저장(`quiz.leaderboard.v1`, 10개, 최근 우선, 이름 없음) | 15, 16 |
+| 8 | 오류 처리 5가지 | 6, 10, 15, 16, 17 |
+| 9.2, 10 | 직접 확인, 단계별 완료 기준 | 7, 14, 18 |
 | 11 | 다루지 않는 것 | 전역 제약(만들지 않음) |
