@@ -1,5 +1,6 @@
 // 작성: 2026-10-08 13:20 KST
-// 수정: 2026-10-10 12:04 KST — CLAUDE.md 문항 작성 규칙 10개로 다시 점검해 고침(확인되지 않은 연도 삭제, wg-08 교체 등)
+// 수정: 2026-10-10 21:04 KST — CLAUDE.md 문항 작성 규칙 10개로 다시 점검해 고침(확인되지 않은 연도 삭제, wg-08 교체 등)
+// 수정: 2026-10-10 21:22 KST — 최종 점검: wg-08 문장 다듬기, sc-06 오답 교체, ac-01·ac-02 보기 형식 맞춤
 // 상식 퀴즈 문항 데이터 — 카테고리 목록과 문항 40개(데이터만 둔다)
 
 const CATEGORIES = [
@@ -169,10 +170,10 @@ const QUESTIONS = [
   {
     id: "wg-08",
     category: "world-geography",
-    question: "남아메리카 대륙의 서쪽 끝을 따라 남북으로 길게 뻗은 산맥은?",
+    question: "남아메리카 대륙 서부를 따라 남북으로 길게 뻗은 산맥은?",
     choices: ["로키산맥", "알프스산맥", "안데스산맥", "우랄산맥"],
     answer: 2,
-    explanation: "안데스산맥은 남아메리카 대륙의 서쪽 끝을 따라 남쪽 끝에서 북쪽 해안까지 이어진다.",
+    explanation: "안데스산맥은 남아메리카 대륙 서부를 따라 남쪽 끝에서 북쪽 해안까지 이어진다.",
     source: { name: "내셔널지오그래픽 교육(South America: Physical Geography)", url: "https://education.nationalgeographic.org/resource/south-america-physical-geography/" },
   },
   {
@@ -244,7 +245,7 @@ const QUESTIONS = [
     id: "sc-06",
     category: "science",
     question: "원소 주기율표를 발표한 러시아의 화학자는?",
-    choices: ["멘델레예프", "돌턴", "라부아지에", "보어"],
+    choices: ["멘델레예프", "돌턴", "라부아지에", "베르셀리우스"],
     answer: 0,
     explanation: "멘델레예프는 러시아 화학회에서 63개 원소로 된 주기율표를 발표했다.",
     source: { name: "미국 국립표준기술연구소(NIST)", url: "https://www.nist.gov/news-events/news/2024/02/henry-moseley-and-periodic-table-elements" },
@@ -291,7 +292,7 @@ const QUESTIONS = [
     id: "ac-01",
     category: "arts-culture",
     question: "루브르 박물관에 있는 「모나리자」를 그린 화가는?",
-    choices: ["미켈란젤로", "라파엘로", "레오나르도 다빈치", "보티첼리"],
+    choices: ["미켈란젤로 부오나로티", "라파엘로 산치오", "레오나르도 다빈치", "산드로 보티첼리"],
     answer: 2,
     explanation: "「모나리자」는 레오나르도 다빈치가 그린 리자 게라르디니의 초상화이다.",
     source: { name: "루브르 박물관", url: "https://www.louvre.fr/en/explore/the-palace/from-the-mona-lisa-to-the-wedding-feast-at-cana" },
@@ -300,7 +301,7 @@ const QUESTIONS = [
     id: "ac-02",
     category: "arts-culture",
     question: "「감자 먹는 사람들」을 그린 화가는?",
-    choices: ["렘브란트", "폴 고갱", "빈센트 반 고흐", "클로드 모네"],
+    choices: ["에두아르 마네", "폴 고갱", "빈센트 반 고흐", "클로드 모네"],
     answer: 2,
     explanation: "「감자 먹는 사람들」은 빈센트 반 고흐의 작품으로, 반 고흐 미술관이 소장하고 있다.",
     source: { name: "반 고흐 미술관(The Potato Eaters)", url: "https://www.vangoghmuseum.nl/en/collection/s0005V1962" },
