@@ -201,6 +201,7 @@ function initApp() {
     button.addEventListener("click", () => startRound(state.categoryId, button.dataset.mode));
   });
   byId("back-button").addEventListener("click", goHome);
+  byId("hint-button").addEventListener("click", useHint);
   byId("next-button").addEventListener("click", goNext);
   byId("again-button").addEventListener("click", () => startRound(state.categoryId, state.mode));
   byId("home-button").addEventListener("click", goHome);
@@ -253,6 +254,8 @@ function renderQuestion() {
     list.appendChild(button);
   });
   byId("feedback").hidden = true;
+  byId("hint-button").hidden = !mode.hint;
+  byId("hint-button").disabled = false;
   startTimer();
 }
 
@@ -283,6 +286,7 @@ function renderFeedback(choiceIndex, isCorrect) {
     if (i === question.answer) button.classList.add("is-correct");
     else if (i === choiceIndex) button.classList.add("is-wrong");
   });
+  byId("hint-button").disabled = true;
   const result = byId("feedback-result");
   if (isCorrect) result.textContent = "정답!";
   else result.textContent = choiceIndex === null ? "시간 초과" : "오답";
@@ -348,6 +352,19 @@ function stopTimer() {
     window.clearInterval(state.timerId);
     state.timerId = null;
   }
+}
+
+function useHint() {
+  // 답한 뒤나 이미 쓴 뒤에는 무시한다.
+  if (state.answered || state.usedHint) return;
+  state.usedHint = true;
+  const question = state.round[state.index];
+  const buttons = byId("choice-list").querySelectorAll(".choice");
+  QuizCore.pickHintRemovals(question).forEach((i) => {
+    buttons[i].disabled = true;
+    buttons[i].classList.add("is-removed");
+  });
+  byId("hint-button").disabled = true;
 }
 
 /* ========== 3. 자체 점검 (index.html?test 또는 점검 명령으로 실행) ========== */
