@@ -131,6 +131,8 @@ const MODES = {
   hint: { name: "힌트", timeLimit: null, hint: true, ranked: true, retry: false },
 };
 
+const TIMER_TICK_MS = 200;
+
 // 진행 상태는 이 객체 하나에 둔다.
 const state = {
   mode: "practice",
@@ -143,6 +145,7 @@ const state = {
   usedHint: false,
   answered: false,
   finished: false,
+  timerId: null,
 };
 
 function byId(id) {
@@ -215,6 +218,7 @@ function renderModeSelect() {
 }
 
 function startRound(categoryId, mode) {
+  stopTimer();
   Object.assign(state, {
     categoryId,
     mode,
@@ -249,6 +253,7 @@ function renderQuestion() {
     list.appendChild(button);
   });
   byId("feedback").hidden = true;
+  startTimer();
 }
 
 function renderScoreLine() {
@@ -256,9 +261,10 @@ function renderScoreLine() {
 }
 
 function handleAnswer(choiceIndex) {
-  // 연타는 무시한다. 채점은 문항마다 한 번만 한다.
+  // 연타나 시간 초과와 겹친 클릭은 무시한다. 채점은 문항마다 한 번만 한다.
   if (state.answered) return;
   state.answered = true;
+  stopTimer();
   const question = state.round[state.index];
   const isCorrect = choiceIndex === question.answer;
   state.score += QuizCore.scoreFor(isCorrect, state.usedHint);
@@ -278,7 +284,8 @@ function renderFeedback(choiceIndex, isCorrect) {
     else if (i === choiceIndex) button.classList.add("is-wrong");
   });
   const result = byId("feedback-result");
-  result.textContent = isCorrect ? "정답!" : "오답";
+  if (isCorrect) result.textContent = "정답!";
+  else result.textContent = choiceIndex === null ? "시간 초과" : "오답";
   result.className = `feedback-result ${isCorrect ? "is-correct" : "is-wrong"}`;
   byId("feedback-explanation").textContent = question.explanation;
   const link = byId("feedback-source");
@@ -312,7 +319,35 @@ function renderResult() {
 }
 
 function goHome() {
+  stopTimer();
   showScreen("start");
+}
+
+function startTimer() {
+  stopTimer();
+  const limit = MODES[state.mode].timeLimit;
+  const timer = byId("quiz-timer");
+  if (!limit) {
+    timer.hidden = true;
+    return;
+  }
+  // 남은 시간은 실제 경과 시각으로 계산해 브라우저가 느려져도 늘어나지 않게 한다.
+  const endsAt = Date.now() + limit * 1000;
+  const tick = () => {
+    const leftMs = endsAt - Date.now();
+    timer.textContent = `남은 시간 ${Math.max(0, Math.ceil(leftMs / 1000))}초`;
+    if (leftMs <= 0) handleAnswer(null);
+  };
+  timer.hidden = false;
+  state.timerId = window.setInterval(tick, TIMER_TICK_MS);
+  tick();
+}
+
+function stopTimer() {
+  if (state.timerId !== null) {
+    window.clearInterval(state.timerId);
+    state.timerId = null;
+  }
 }
 
 /* ========== 3. 자체 점검 (index.html?test 또는 점검 명령으로 실행) ========== */
