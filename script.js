@@ -127,6 +127,8 @@ const QuizCore = (function () {
 // 모드별 차이는 이 설정에만 둔다. 퀴즈 흐름은 하나이고 이 값으로만 분기한다.
 const MODES = {
   practice: { name: "연습", timeLimit: null, hint: false, ranked: false, retry: true },
+  speed: { name: "스피드", timeLimit: 15, hint: false, ranked: true, retry: false },
+  hint: { name: "힌트", timeLimit: null, hint: true, ranked: true, retry: false },
 };
 
 // 진행 상태는 이 객체 하나에 둔다.
@@ -190,12 +192,26 @@ function initApp() {
     return;
   }
   document.querySelectorAll("[data-category]").forEach((button) => {
-    button.addEventListener("click", () => startRound(button.dataset.category, "practice"));
+    button.addEventListener("click", () => chooseCategory(button.dataset.category));
   });
+  document.querySelectorAll("[data-mode]").forEach((button) => {
+    button.addEventListener("click", () => startRound(state.categoryId, button.dataset.mode));
+  });
+  byId("back-button").addEventListener("click", goHome);
   byId("next-button").addEventListener("click", goNext);
   byId("again-button").addEventListener("click", () => startRound(state.categoryId, state.mode));
   byId("home-button").addEventListener("click", goHome);
   showScreen("start");
+}
+
+function chooseCategory(categoryId) {
+  state.categoryId = categoryId;
+  renderModeSelect();
+}
+
+function renderModeSelect() {
+  byId("mode-title").textContent = categoryName(state.categoryId);
+  showScreen("mode");
 }
 
 function startRound(categoryId, mode) {
