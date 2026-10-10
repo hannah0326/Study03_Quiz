@@ -142,6 +142,7 @@ const state = {
   score: 0,
   correctCount: 0,
   wrongIds: [],
+  results: [],
   isRetry: false,
   usedHint: false,
   answered: false,
@@ -241,6 +242,7 @@ function beginRound(categoryId, mode, round, isRetry) {
     score: 0,
     correctCount: 0,
     wrongIds: [],
+    results: [],
     finished: false,
   });
   showScreen("quiz");
@@ -292,6 +294,7 @@ function handleAnswer(choiceIndex) {
   } else {
     state.wrongIds.push(question.id);
   }
+  state.results.push({ question, choiceIndex, isCorrect, usedHint: state.usedHint });
   renderFeedback(choiceIndex, isCorrect);
 }
 
@@ -341,6 +344,7 @@ function renderResult() {
   }
   byId("result-practice-note").hidden = mode.ranked;
   byId("retry-button").hidden = !(mode.retry && state.wrongIds.length > 0);
+  renderResultList();
   showScreen("result");
 }
 
@@ -387,6 +391,37 @@ function useHint() {
     buttons[i].classList.add("is-removed");
   });
   byId("hint-button").disabled = true;
+}
+
+// 결과 목록에 쓸 문구. 시간 초과는 choiceIndex가 null이다.
+function resultLabel(item) {
+  if (item.isCorrect) return item.usedHint ? "정답 (힌트 0.5점)" : "정답";
+  return item.choiceIndex === null ? "시간 초과" : "오답";
+}
+
+// 이번 판에 푼 순서대로 문항별 결과를 그린다. 문항 문자열은 textContent로만 넣는다.
+function renderResultList() {
+  const list = byId("result-list");
+  list.replaceChildren();
+  state.results.forEach((item) => {
+    const { question, choiceIndex } = item;
+    const lines = [
+      ["result-question", question.question],
+      [`result-status ${item.isCorrect ? "is-correct" : "is-wrong"}`, resultLabel(item)],
+      ["", `고른 답: ${choiceIndex === null ? "없음" : question.choices[choiceIndex]}`],
+      ["", `정답: ${question.choices[question.answer]}`],
+      ["result-explanation", question.explanation],
+    ];
+    const li = document.createElement("li");
+    li.className = "result-item";
+    lines.forEach(([className, text]) => {
+      const line = document.createElement("p");
+      if (className) line.className = className;
+      line.textContent = text;
+      li.append(line);
+    });
+    list.append(li);
+  });
 }
 
 /* ========== 3. 자체 점검 (index.html?test 또는 점검 명령으로 실행) ========== */

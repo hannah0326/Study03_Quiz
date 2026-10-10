@@ -234,3 +234,45 @@ button.primary {
   text-decoration: line-through;
   opacity: 0.4;
 }
+
+/* ---- 2단계: 결과 화면의 문항별 결과 ---- */
+
+.result-list-title {
+  margin: 28px 0 8px;
+  font-size: 1.05rem;
+}
+
+.result-list {
+  margin: 0;
+  padding-left: 1.4em;
+}
+
+.result-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.result-item p {
+  margin: 2px 0;
+}
+
+.result-question {
+  font-weight: 600;
+}
+
+.result-status {
+  font-weight: 700;
+}
+
+.result-status.is-correct {
+  color: var(--correct);
+}
+
+.result-status.is-wrong {
+  color: var(--wrong);
+}
+
+.result-explanation {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
