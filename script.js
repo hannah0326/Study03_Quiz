@@ -74,7 +74,7 @@ const QuizCore = (function () {
     if (!q.source || typeof q.source.url !== "string" || !q.source.url.startsWith("https://")) {
       problems.push(`${label}: 출처 URL은 https://로 시작해야 합니다.`);
     }
-    // 문항 규칙 3: "가장"이 있으면 기준과 시점(예: 2024년 기준)을 함께 적는다.
+    // CLAUDE.md 문항 작성 규칙 2: "가장"이 있으면 기준과 시점(예: 2024년 기준)을 함께 적는다.
     if (isText(q.question) && q.question.includes("가장")
       && !(q.question.includes("기준") && /\d{4}년/.test(q.question))) {
       problems.push(`${label}: "가장"이 있으면 기준과 시점(예: 2024년 기준)을 적어야 합니다.`);

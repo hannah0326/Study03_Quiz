@@ -1,4 +1,5 @@
 // 작성: 2026-10-08 13:20 KST
+// 수정: 2026-10-10 12:04 KST — CLAUDE.md 문항 작성 규칙 10개로 다시 점검해 고침(확인되지 않은 연도 삭제, wg-08 교체 등)
 // 상식 퀴즈 문항 데이터 — 카테고리 목록과 문항 40개(데이터만 둔다)
 
 const CATEGORIES = [
@@ -22,28 +23,28 @@ const QUESTIONS = [
   {
     id: "kh-02",
     category: "korean-history",
-    question: "918년 궁예를 몰아내고 고려를 세운 인물은?",
-    choices: ["왕건", "견훤", "궁예", "이성계"],
+    question: "궁예를 몰아내고 고려를 세운 인물은?",
+    choices: ["왕건", "견훤", "대조영", "이성계"],
     answer: 0,
-    explanation: "왕건은 918년 궁예를 내쫓고 고려를 세워 태조가 되었다.",
+    explanation: "왕건은 궁예를 내쫓고 고려를 세워 태조가 되었다.",
     source: { name: "한국민족문화대백과사전 「태조」", url: "https://encykorea.aks.ac.kr/Article/E0059032" },
   },
   {
     id: "kh-03",
     category: "korean-history",
-    question: "1592년 한산도 대첩에서 학익진으로 일본 수군을 크게 무찌른 조선 수군의 장수는?",
+    question: "한산도 대첩에서 학익진으로 일본 수군을 크게 무찌른 조선 수군의 장수는?",
     choices: ["권율", "김시민", "이순신", "곽재우"],
     answer: 2,
-    explanation: "1592년 7월 이순신은 한산섬 앞바다에서 학익진으로 일본 수군의 주력을 격파했다.",
+    explanation: "이순신은 한산섬 앞바다에서 학익진으로 일본 수군의 주력을 격파했다.",
     source: { name: "한국민족문화대백과사전 「한산도대첩」", url: "https://encykorea.aks.ac.kr/Article/E0061676" },
   },
   {
     id: "kh-04",
     category: "korean-history",
-    question: "474년간 이어진 고려 왕조가 멸망한 해는?",
-    choices: ["935년", "1388년", "1910년", "1392년"],
+    question: "이성계 세력이 조선을 세우면서 고려 왕조가 멸망한 해는?",
+    choices: ["935년", "1388년", "1394년", "1392년"],
     answer: 3,
-    explanation: "고려는 918년 왕건이 건국해 1392년 멸망할 때까지 474년간 이어졌다.",
+    explanation: "고려는 1392년 이성계 세력이 공양왕을 몰아내고 조선을 세우면서 멸망했다.",
     source: { name: "한국민족문화대백과사전 「고려」", url: "https://encykorea.aks.ac.kr/Article/E0003424" },
   },
   {
@@ -58,10 +59,10 @@ const QUESTIONS = [
   {
     id: "kh-06",
     category: "korean-history",
-    question: "1919년 4월 11일 대한민국 임시정부가 처음 수립된 도시는?",
+    question: "대한민국 임시정부가 처음 수립된 도시는?",
     choices: ["충칭", "베이징", "상하이", "도쿄"],
     answer: 2,
-    explanation: "대한민국 임시정부는 1919년 4월 11일 중국 상하이에서 수립되었다.",
+    explanation: "대한민국 임시정부는 중국 상하이에서 처음 수립되었다.",
     source: { name: "한국민족문화대백과사전 「대한민국 임시정부」", url: "https://encykorea.aks.ac.kr/Article/E0015017" },
   },
   {
@@ -76,7 +77,7 @@ const QUESTIONS = [
   {
     id: "kh-08",
     category: "korean-history",
-    question: "1894년 동학 농민군의 대장으로, '녹두장군'이라는 별명으로 불린 인물은?",
+    question: "동학 농민군의 대장으로, '녹두장군'이라는 별명으로 불린 인물은?",
     choices: ["전봉준", "최제우", "김옥균", "안중근"],
     answer: 0,
     explanation: "전봉준은 백산에서 동도대장으로 추대되었고, 몸이 작아 녹두장군이란 별명이 생겼다.",
@@ -85,10 +86,10 @@ const QUESTIONS = [
   {
     id: "kh-09",
     category: "korean-history",
-    question: "1377년 청주 흥덕사에서 금속활자로 인쇄한 『직지심체요절』이 현재 소장된 곳은?",
-    choices: ["국립중앙박물관", "프랑스 국립도서관", "영국 대영박물관", "서울대 규장각"],
+    question: "청주 흥덕사에서 금속활자로 인쇄한 『직지심체요절』이 현재 소장된 곳은?",
+    choices: ["한국 국립중앙박물관", "프랑스 국립도서관", "영국 대영박물관", "미국 의회도서관"],
     answer: 1,
-    explanation: "1377년 흥덕사에서 금속활자로 찍은 『불조직지심체요절』은 프랑스 국립도서관에 소장되어 있다.",
+    explanation: "청주 흥덕사에서 금속활자로 찍은 『불조직지심체요절』은 프랑스 국립도서관에 소장되어 있다.",
     source: { name: "한국민족문화대백과사전 「불조직지심체요절」", url: "https://encykorea.aks.ac.kr/Article/E0025035" },
   },
   {
@@ -97,7 +98,7 @@ const QUESTIONS = [
     question: "세종 때 만든 해시계로, 그림자를 받는 면이 솥처럼 오목한 것은?",
     choices: ["자격루", "혼천의", "측우기", "앙부일구"],
     answer: 3,
-    explanation: "앙부일구는 1434년(세종 16)에 만든 해시계로, 시반면이 반구형으로 오목하다.",
+    explanation: "앙부일구는 세종 때 만든 해시계로, 시반면이 반구형으로 오목하다.",
     source: { name: "한국민족문화대백과사전 「앙부일구」", url: "https://encykorea.aks.ac.kr/Article/E0035191" },
   },
 
@@ -142,7 +143,7 @@ const QUESTIONS = [
     id: "wg-05",
     category: "world-geography",
     question: "뉴질랜드의 수도는?",
-    choices: ["오클랜드", "웰링턴", "크라이스트처치", "시드니"],
+    choices: ["오클랜드", "웰링턴", "크라이스트처치", "퀸스타운"],
     answer: 1,
     explanation: "뉴질랜드의 수도는 웰링턴(Wellington)이다.",
     source: { name: "외교부 국가정보(뉴질랜드)", url: "https://www.mofa.go.kr/www/nation/m_3458/view.do?seq=8" },
@@ -168,11 +169,11 @@ const QUESTIONS = [
   {
     id: "wg-08",
     category: "world-geography",
-    question: "유엔 「세계 인구 전망 2022」 기준, 2023년 4월 말 인구가 가장 많은 나라가 될 것으로 전망된 나라는?",
-    choices: ["중국", "미국", "인도", "인도네시아"],
+    question: "남아메리카 대륙의 서쪽 끝을 따라 남북으로 길게 뻗은 산맥은?",
+    choices: ["로키산맥", "알프스산맥", "안데스산맥", "우랄산맥"],
     answer: 2,
-    explanation: "유엔은 인도 인구가 2023년 4월 말 중국 본토 인구와 같아진 뒤 넘어설 것으로 전망했다.",
-    source: { name: "유엔 경제사회국(UN DESA)", url: "https://www.un.org/en/desa/india-overtake-china-world-most-populous-country-april-2023-united-nations-projects" },
+    explanation: "안데스산맥은 남아메리카 대륙의 서쪽 끝을 따라 남쪽 끝에서 북쪽 해안까지 이어진다.",
+    source: { name: "내셔널지오그래픽 교육(South America: Physical Geography)", url: "https://education.nationalgeographic.org/resource/south-america-physical-geography/" },
   },
   {
     id: "wg-09",
@@ -187,7 +188,7 @@ const QUESTIONS = [
     id: "wg-10",
     category: "world-geography",
     question: "스페인의 수도는?",
-    choices: ["마드리드", "바르셀로나", "세비야", "리스본"],
+    choices: ["마드리드", "바르셀로나", "세비야", "발렌시아"],
     answer: 0,
     explanation: "스페인왕국의 수도는 마드리드이다.",
     source: { name: "외교부 국가정보(스페인)", url: "https://www.mofa.go.kr/www/nation/m_3458/view.do?seq=104" },
@@ -216,7 +217,7 @@ const QUESTIONS = [
     id: "sc-03",
     category: "science",
     question: "진공에서 빛의 속력은 1초에 약 몇 km인가?",
-    choices: ["약 340km", "약 3만 km", "약 30만 km", "약 300만 km"],
+    choices: ["약 340km", "약 3만km", "약 30만km", "약 300만km"],
     answer: 2,
     explanation: "진공에서 빛의 속력은 299,792,458m/s로, 1초에 약 30만 km이다.",
     source: { name: "미국 국립표준기술연구소(NIST) 물리 상수", url: "https://physics.nist.gov/cgi-bin/cuu/Value?c" },
@@ -224,10 +225,10 @@ const QUESTIONS = [
   {
     id: "sc-04",
     category: "science",
-    question: "1953년 DNA의 이중 나선 구조를 밝힌 연구에 참여한 과학자로 짝지어진 것은?",
-    choices: ["왓슨과 크릭", "멘델과 다윈", "퀴리 부부", "뉴턴과 라이프니츠"],
+    question: "DNA의 이중 나선 구조를 밝힌 연구에 참여한 과학자로 짝지어진 것은?",
+    choices: ["왓슨과 크릭", "멘델과 다윈", "러더퍼드와 보어", "뉴턴과 라이프니츠"],
     answer: 0,
-    explanation: "DNA 이중 나선 구조는 1953년 왓슨, 크릭, 윌킨스, 프랭클린의 연구로 밝혀졌다.",
+    explanation: "DNA 이중 나선 구조는 왓슨, 크릭, 윌킨스, 프랭클린의 연구로 밝혀졌다.",
     source: { name: "미국 국립인간게놈연구소(NHGRI) DNA Fact Sheet", url: "https://www.genome.gov/about-genomics/fact-sheets/Deoxyribonucleic-Acid-Fact-Sheet" },
   },
   {
@@ -242,10 +243,10 @@ const QUESTIONS = [
   {
     id: "sc-06",
     category: "science",
-    question: "1869년 원소 주기율표를 발표한 러시아의 화학자는?",
+    question: "원소 주기율표를 발표한 러시아의 화학자는?",
     choices: ["멘델레예프", "돌턴", "라부아지에", "보어"],
     answer: 0,
-    explanation: "멘델레예프는 1869년 러시아 화학회에서 63개 원소로 된 주기율표를 발표했다.",
+    explanation: "멘델레예프는 러시아 화학회에서 63개 원소로 된 주기율표를 발표했다.",
     source: { name: "미국 국립표준기술연구소(NIST)", url: "https://www.nist.gov/news-events/news/2024/02/henry-moseley-and-periodic-table-elements" },
   },
   {
@@ -307,10 +308,10 @@ const QUESTIONS = [
   {
     id: "ac-03",
     category: "arts-culture",
-    question: "1937년 바스크 지방 도시 게르니카의 폭격을 계기로 그린 「게르니카」의 화가는?",
+    question: "바스크 지방 도시 게르니카의 폭격을 계기로 그린 「게르니카」의 화가는?",
     choices: ["살바도르 달리", "파블로 피카소", "호안 미로", "앙리 마티스"],
     answer: 1,
-    explanation: "피카소는 독일군의 게르니카 폭격 사진을 보고 1937년 「게르니카」를 그렸다.",
+    explanation: "피카소는 독일군의 게르니카 폭격 사진을 보고 「게르니카」를 그렸다.",
     source: { name: "레이나 소피아 국립미술관(Guernica)", url: "https://www.museoreinasofia.es/en/collections/artwork/guernica-0/" },
   },
   {
@@ -334,28 +335,28 @@ const QUESTIONS = [
   {
     id: "ac-06",
     category: "arts-culture",
-    question: "1853년 베네치아 라 페니체 극장에서 초연된 오페라 「라 트라비아타」의 작곡가는?",
+    question: "베네치아 라 페니체 극장에서 초연된 오페라 「라 트라비아타」의 작곡가는?",
     choices: ["푸치니", "베르디", "로시니", "바그너"],
     answer: 1,
-    explanation: "베르디의 「라 트라비아타」는 1853년 3월 6일 베네치아 라 페니체 극장에서 초연되었다.",
+    explanation: "베르디의 「라 트라비아타」는 베네치아 라 페니체 극장에서 초연되었다.",
     source: { name: "라 페니체 극장(La traviata)", url: "https://www.teatrolafenice.it/en/event/giuseppe-verdi-la-traviata/" },
   },
   {
     id: "ac-07",
     category: "arts-culture",
-    question: "2003년 유네스코 인류 구전 및 무형유산 걸작으로 선포되고 2008년 인류무형문화유산 대표목록에 오른 한국의 서사적 노래는?",
+    question: "소리꾼 한 사람이 고수의 북 장단에 맞춰 긴 이야기를 노래하는 한국의 유네스코 인류무형문화유산은?",
     choices: ["아리랑", "판소리", "강강술래", "가곡"],
     answer: 1,
-    explanation: "판소리는 2003년 걸작으로 선포되었고, 2008년 인류무형문화유산 대표목록에 올랐다.",
+    explanation: "판소리는 소리꾼 한 사람이 고수의 북 장단에 맞춰 노래와 말로 이야기를 펼치는 인류무형문화유산이다.",
     source: { name: "유네스코 무형유산(Pansori epic chant)", url: "https://ich.unesco.org/en/RL/pansori-epic-chant-00070" },
   },
   {
     id: "ac-08",
     category: "arts-culture",
-    question: "1995년 불국사와 함께 유네스코 세계문화유산에 등재된 석굴암이 있는 도시는?",
+    question: "불국사와 함께 유네스코 세계문화유산에 등재된 석굴암이 있는 도시는?",
     choices: ["경주", "부여", "공주", "안동"],
     answer: 0,
-    explanation: "석굴암은 경상북도 경주시 진현동에 있으며, 1995년 불국사와 함께 세계문화유산에 등재되었다.",
+    explanation: "석굴암은 경상북도 경주시 진현동에 있으며, 불국사와 함께 세계문화유산에 등재되었다.",
     source: { name: "한국민족문화대백과사전 「경주 석굴암 석굴」", url: "https://encykorea.aks.ac.kr/Article/E0028362" },
   },
   {
@@ -370,10 +371,10 @@ const QUESTIONS = [
   {
     id: "ac-10",
     category: "arts-culture",
-    question: "1780년 청나라를 다녀온 뒤 견문을 기록한 『열하일기』의 지은이는?",
+    question: "청나라를 다녀온 뒤 견문을 기록한 『열하일기』의 지은이는?",
     choices: ["정약용", "홍대용", "박제가", "박지원"],
     answer: 3,
-    explanation: "『열하일기』는 조선 후기 실학자 박지원이 1780년 청나라를 다녀온 뒤 쓴 견문록이다.",
+    explanation: "『열하일기』는 조선 후기 실학자 박지원이 청나라를 다녀온 뒤 쓴 견문록이다.",
     source: { name: "한국민족문화대백과사전 「열하일기」", url: "https://encykorea.aks.ac.kr/Article/E0037072" },
   },
 ];
