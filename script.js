@@ -142,6 +142,7 @@ const state = {
   score: 0,
   correctCount: 0,
   wrongIds: [],
+  isRetry: false,
   usedHint: false,
   answered: false,
   finished: false,
@@ -203,6 +204,7 @@ function initApp() {
   byId("back-button").addEventListener("click", goHome);
   byId("hint-button").addEventListener("click", useHint);
   byId("next-button").addEventListener("click", goNext);
+  byId("retry-button").addEventListener("click", startRetry);
   byId("again-button").addEventListener("click", () => startRound(state.categoryId, state.mode));
   byId("home-button").addEventListener("click", goHome);
   showScreen("start");
@@ -219,11 +221,22 @@ function renderModeSelect() {
 }
 
 function startRound(categoryId, mode) {
+  beginRound(categoryId, mode, QuizCore.buildRound(QUESTIONS, categoryId), false);
+}
+
+// 처음 판에서 틀린 문항만 다시 섞어서 푼다. 처음 판의 점수는 바꾸지 않는다.
+function startRetry() {
+  const wrongQuestions = QUESTIONS.filter((question) => state.wrongIds.includes(question.id));
+  beginRound(state.categoryId, "practice", QuizCore.buildRound(wrongQuestions, state.categoryId), true);
+}
+
+function beginRound(categoryId, mode, round, isRetry) {
   stopTimer();
   Object.assign(state, {
     categoryId,
     mode,
-    round: QuizCore.buildRound(QUESTIONS, categoryId),
+    round,
+    isRetry,
     index: 0,
     score: 0,
     correctCount: 0,
@@ -239,7 +252,8 @@ function renderQuestion() {
   const mode = MODES[state.mode];
   state.answered = false;
   state.usedHint = false;
-  byId("quiz-label").textContent = `${categoryName(state.categoryId)} · ${mode.name}`;
+  byId("quiz-label").textContent =
+    `${categoryName(state.categoryId)} · ${mode.name}${state.isRetry ? " · 다시 풀기" : ""}`;
   byId("quiz-progress").textContent = `${state.index + 1} / ${state.round.length}`;
   renderScoreLine();
   byId("quiz-question").textContent = question.question;
@@ -260,7 +274,9 @@ function renderQuestion() {
 }
 
 function renderScoreLine() {
-  byId("quiz-score").textContent = `점수 ${formatScore(state.score)}`;
+  byId("quiz-score").textContent = state.isRetry
+    ? `맞힌 수 ${state.correctCount}`
+    : `점수 ${formatScore(state.score)}`;
 }
 
 function handleAnswer(choiceIndex) {
@@ -316,9 +332,15 @@ function renderResult() {
   const mode = MODES[state.mode];
   const total = state.round.length;
   state.finished = true;
-  byId("result-score").textContent = `${formatScore(state.score)} / ${total}점`;
-  byId("result-detail").textContent = `맞힌 문항 ${state.correctCount}개`;
+  if (state.isRetry) {
+    byId("result-score").textContent = `${state.correctCount} / ${total}`;
+    byId("result-detail").textContent = "다시 풀기 결과(맞힌 수 / 푼 수)입니다. 처음 판의 점수는 바뀌지 않습니다.";
+  } else {
+    byId("result-score").textContent = `${formatScore(state.score)} / ${total}점`;
+    byId("result-detail").textContent = `맞힌 문항 ${state.correctCount}개`;
+  }
   byId("result-practice-note").hidden = mode.ranked;
+  byId("retry-button").hidden = !(mode.retry && state.wrongIds.length > 0);
   showScreen("result");
 }
 
