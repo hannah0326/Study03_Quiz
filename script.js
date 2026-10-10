@@ -113,7 +113,13 @@ const QuizCore = (function () {
     return problems;
   }
 
-  return { shuffle, buildRound, scoreFor, validateQuestions };
+  // 힌트로 지울 오답 보기 위치 2개를 돌려준다. 정답 위치는 고르지 않는다.
+  function pickHintRemovals(question, rng = Math.random) {
+    const wrong = question.choices.map((_, i) => i).filter((i) => i !== question.answer);
+    return shuffle(wrong, rng).slice(0, 2).sort((a, b) => a - b);
+  }
+
+  return { shuffle, buildRound, scoreFor, validateQuestions, pickHintRemovals };
 })();
 
 /* ========== 2. 화면 처리 ========== */
@@ -435,6 +441,17 @@ check("validateQuestions: 실제 문항 데이터(questions.js)에 문제가 없
   assert(typeof QUESTIONS !== "undefined" && typeof CATEGORIES !== "undefined", "questions.js를 불러오지 못했습니다.");
   const problems = QuizCore.validateQuestions(QUESTIONS, CATEGORIES);
   assert(problems.length === 0, problems.join(" / "));
+});
+
+check("pickHintRemovals: 정답이 아닌 서로 다른 보기 2개를 고른다", () => {
+  const question = { choices: ["가", "나", "다", "라"], answer: 2 };
+  for (let seed = 1; seed <= 50; seed += 1) {
+    const removed = QuizCore.pickHintRemovals(question, seededRng(seed));
+    assert(removed.length === 2, `seed ${seed}: ${removed.length}개를 골랐습니다.`);
+    assert(removed[0] !== removed[1], `seed ${seed}: 같은 보기를 두 번 골랐습니다.`);
+    assert(!removed.includes(2), `seed ${seed}: 정답을 골랐습니다.`);
+    assert(removed.every((i) => Number.isInteger(i) && i >= 0 && i < 4), `seed ${seed}: 범위 밖 위치입니다.`);
+  }
 });
 
 // 모든 점검을 실행하고 콘솔에 결과를 찍는다. 실패한 개수를 돌려준다.
