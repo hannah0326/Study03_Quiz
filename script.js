@@ -113,7 +113,13 @@ const QuizCore = (function () {
     return problems;
   }
 
-  return { shuffle, buildRound, scoreFor, validateQuestions };
+  // 힌트로 지울 오답 보기 위치 2개를 돌려준다. 정답 위치는 고르지 않는다.
+  function pickHintRemovals(question, rng = Math.random) {
+    const wrong = question.choices.map((_, i) => i).filter((i) => i !== question.answer);
+    return shuffle(wrong, rng).slice(0, 2).sort((a, b) => a - b);
+  }
+
+  return { shuffle, buildRound, scoreFor, validateQuestions, pickHintRemovals };
 })();
 
 /* ========== 2. 화면 처리 ========== */
@@ -121,7 +127,11 @@ const QuizCore = (function () {
 // 모드별 차이는 이 설정에만 둔다. 퀴즈 흐름은 하나이고 이 값으로만 분기한다.
 const MODES = {
   practice: { name: "연습", timeLimit: null, hint: false, ranked: false, retry: true },
+  speed: { name: "스피드", timeLimit: 15, hint: false, ranked: true, retry: false },
+  hint: { name: "힌트", timeLimit: null, hint: true, ranked: true, retry: false },
 };
+
+const TIMER_TICK_MS = 200;
 
 // 진행 상태는 이 객체 하나에 둔다.
 const state = {
@@ -132,9 +142,12 @@ const state = {
   score: 0,
   correctCount: 0,
   wrongIds: [],
+  results: [],
+  isRetry: false,
   usedHint: false,
   answered: false,
   finished: false,
+  timerId: null,
 };
 
 function byId(id) {
@@ -184,23 +197,52 @@ function initApp() {
     return;
   }
   document.querySelectorAll("[data-category]").forEach((button) => {
-    button.addEventListener("click", () => startRound(button.dataset.category, "practice"));
+    button.addEventListener("click", () => chooseCategory(button.dataset.category));
   });
+  document.querySelectorAll("[data-mode]").forEach((button) => {
+    button.addEventListener("click", () => startRound(state.categoryId, button.dataset.mode));
+  });
+  byId("back-button").addEventListener("click", goHome);
+  byId("hint-button").addEventListener("click", useHint);
   byId("next-button").addEventListener("click", goNext);
+  byId("retry-button").addEventListener("click", startRetry);
   byId("again-button").addEventListener("click", () => startRound(state.categoryId, state.mode));
   byId("home-button").addEventListener("click", goHome);
   showScreen("start");
 }
 
+function chooseCategory(categoryId) {
+  state.categoryId = categoryId;
+  renderModeSelect();
+}
+
+function renderModeSelect() {
+  byId("mode-title").textContent = categoryName(state.categoryId);
+  showScreen("mode");
+}
+
 function startRound(categoryId, mode) {
+  beginRound(categoryId, mode, QuizCore.buildRound(QUESTIONS, categoryId), false);
+}
+
+// 처음 판에서 틀린 문항만 다시 섞어서 푼다. 처음 판의 점수는 바꾸지 않는다.
+function startRetry() {
+  const wrongQuestions = QUESTIONS.filter((question) => state.wrongIds.includes(question.id));
+  beginRound(state.categoryId, "practice", QuizCore.buildRound(wrongQuestions, state.categoryId), true);
+}
+
+function beginRound(categoryId, mode, round, isRetry) {
+  stopTimer();
   Object.assign(state, {
     categoryId,
     mode,
-    round: QuizCore.buildRound(QUESTIONS, categoryId),
+    round,
+    isRetry,
     index: 0,
     score: 0,
     correctCount: 0,
     wrongIds: [],
+    results: [],
     finished: false,
   });
   showScreen("quiz");
@@ -212,7 +254,8 @@ function renderQuestion() {
   const mode = MODES[state.mode];
   state.answered = false;
   state.usedHint = false;
-  byId("quiz-label").textContent = `${categoryName(state.categoryId)} · ${mode.name}`;
+  byId("quiz-label").textContent =
+    `${categoryName(state.categoryId)} · ${mode.name}${state.isRetry ? " · 다시 풀기" : ""}`;
   byId("quiz-progress").textContent = `${state.index + 1} / ${state.round.length}`;
   renderScoreLine();
   byId("quiz-question").textContent = question.question;
@@ -227,16 +270,22 @@ function renderQuestion() {
     list.appendChild(button);
   });
   byId("feedback").hidden = true;
+  byId("hint-button").hidden = !mode.hint;
+  byId("hint-button").disabled = false;
+  startTimer();
 }
 
 function renderScoreLine() {
-  byId("quiz-score").textContent = `점수 ${formatScore(state.score)}`;
+  byId("quiz-score").textContent = state.isRetry
+    ? `맞힌 수 ${state.correctCount}`
+    : `점수 ${formatScore(state.score)}`;
 }
 
 function handleAnswer(choiceIndex) {
-  // 연타는 무시한다. 채점은 문항마다 한 번만 한다.
+  // 연타나 시간 초과와 겹친 클릭은 무시한다. 채점은 문항마다 한 번만 한다.
   if (state.answered) return;
   state.answered = true;
+  stopTimer();
   const question = state.round[state.index];
   const isCorrect = choiceIndex === question.answer;
   state.score += QuizCore.scoreFor(isCorrect, state.usedHint);
@@ -245,6 +294,7 @@ function handleAnswer(choiceIndex) {
   } else {
     state.wrongIds.push(question.id);
   }
+  state.results.push({ question, choiceIndex, isCorrect, usedHint: state.usedHint });
   renderFeedback(choiceIndex, isCorrect);
 }
 
@@ -255,8 +305,10 @@ function renderFeedback(choiceIndex, isCorrect) {
     if (i === question.answer) button.classList.add("is-correct");
     else if (i === choiceIndex) button.classList.add("is-wrong");
   });
+  byId("hint-button").disabled = true;
   const result = byId("feedback-result");
-  result.textContent = isCorrect ? "정답!" : "오답";
+  if (isCorrect) result.textContent = "정답!";
+  else result.textContent = choiceIndex === null ? "시간 초과" : "오답";
   result.className = `feedback-result ${isCorrect ? "is-correct" : "is-wrong"}`;
   byId("feedback-explanation").textContent = question.explanation;
   const link = byId("feedback-source");
@@ -283,14 +335,93 @@ function renderResult() {
   const mode = MODES[state.mode];
   const total = state.round.length;
   state.finished = true;
-  byId("result-score").textContent = `${formatScore(state.score)} / ${total}점`;
-  byId("result-detail").textContent = `맞힌 문항 ${state.correctCount}개`;
+  if (state.isRetry) {
+    byId("result-score").textContent = `${state.correctCount} / ${total}`;
+    byId("result-detail").textContent = "다시 풀기 결과(맞힌 수 / 푼 수)입니다. 처음 판의 점수는 바뀌지 않습니다.";
+  } else {
+    byId("result-score").textContent = `${formatScore(state.score)} / ${total}점`;
+    byId("result-detail").textContent = `맞힌 문항 ${state.correctCount}개`;
+  }
   byId("result-practice-note").hidden = mode.ranked;
+  byId("retry-button").hidden = !(mode.retry && state.wrongIds.length > 0);
+  renderResultList();
   showScreen("result");
 }
 
 function goHome() {
+  stopTimer();
   showScreen("start");
+}
+
+function startTimer() {
+  stopTimer();
+  const limit = MODES[state.mode].timeLimit;
+  const timer = byId("quiz-timer");
+  if (!limit) {
+    timer.hidden = true;
+    return;
+  }
+  // 남은 시간은 실제 경과 시각으로 계산해 브라우저가 느려져도 늘어나지 않게 한다.
+  const endsAt = Date.now() + limit * 1000;
+  const tick = () => {
+    const leftMs = endsAt - Date.now();
+    timer.textContent = `남은 시간 ${Math.max(0, Math.ceil(leftMs / 1000))}초`;
+    if (leftMs <= 0) handleAnswer(null);
+  };
+  timer.hidden = false;
+  state.timerId = window.setInterval(tick, TIMER_TICK_MS);
+  tick();
+}
+
+function stopTimer() {
+  if (state.timerId !== null) {
+    window.clearInterval(state.timerId);
+    state.timerId = null;
+  }
+}
+
+function useHint() {
+  // 답한 뒤나 이미 쓴 뒤에는 무시한다.
+  if (state.answered || state.usedHint) return;
+  state.usedHint = true;
+  const question = state.round[state.index];
+  const buttons = byId("choice-list").querySelectorAll(".choice");
+  QuizCore.pickHintRemovals(question).forEach((i) => {
+    buttons[i].disabled = true;
+    buttons[i].classList.add("is-removed");
+  });
+  byId("hint-button").disabled = true;
+}
+
+// 결과 목록에 쓸 문구. 시간 초과는 choiceIndex가 null이다.
+function resultLabel(item) {
+  if (item.isCorrect) return item.usedHint ? "정답 (힌트 0.5점)" : "정답";
+  return item.choiceIndex === null ? "시간 초과" : "오답";
+}
+
+// 이번 판에 푼 순서대로 문항별 결과를 그린다. 문항 문자열은 textContent로만 넣는다.
+function renderResultList() {
+  const list = byId("result-list");
+  list.replaceChildren();
+  state.results.forEach((item) => {
+    const { question, choiceIndex } = item;
+    const lines = [
+      ["result-question", question.question],
+      [`result-status ${item.isCorrect ? "is-correct" : "is-wrong"}`, resultLabel(item)],
+      ["", `고른 답: ${choiceIndex === null ? "없음" : question.choices[choiceIndex]}`],
+      ["", `정답: ${question.choices[question.answer]}`],
+      ["result-explanation", question.explanation],
+    ];
+    const li = document.createElement("li");
+    li.className = "result-item";
+    lines.forEach(([className, text]) => {
+      const line = document.createElement("p");
+      if (className) line.className = className;
+      line.textContent = text;
+      li.append(line);
+    });
+    list.append(li);
+  });
 }
 
 /* ========== 3. 자체 점검 (index.html?test 또는 점검 명령으로 실행) ========== */
@@ -435,6 +566,17 @@ check("validateQuestions: 실제 문항 데이터(questions.js)에 문제가 없
   assert(typeof QUESTIONS !== "undefined" && typeof CATEGORIES !== "undefined", "questions.js를 불러오지 못했습니다.");
   const problems = QuizCore.validateQuestions(QUESTIONS, CATEGORIES);
   assert(problems.length === 0, problems.join(" / "));
+});
+
+check("pickHintRemovals: 정답이 아닌 서로 다른 보기 2개를 고른다", () => {
+  const question = { choices: ["가", "나", "다", "라"], answer: 2 };
+  for (let seed = 1; seed <= 50; seed += 1) {
+    const removed = QuizCore.pickHintRemovals(question, seededRng(seed));
+    assert(removed.length === 2, `seed ${seed}: ${removed.length}개를 골랐습니다.`);
+    assert(removed[0] !== removed[1], `seed ${seed}: 같은 보기를 두 번 골랐습니다.`);
+    assert(!removed.includes(2), `seed ${seed}: 정답을 골랐습니다.`);
+    assert(removed.every((i) => Number.isInteger(i) && i >= 0 && i < 4), `seed ${seed}: 범위 밖 위치입니다.`);
+  }
 });
 
 // 모든 점검을 실행하고 콘솔에 결과를 찍는다. 실패한 개수를 돌려준다.
