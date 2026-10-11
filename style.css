@@ -277,11 +277,10 @@ button.primary {
   font-size: 0.95rem;
 }
 
-/* ---- 만든 사람(학번, 이름) ---- */
+/* ---- 만든 사람(학번, 이름): 시작 화면 맨 위 ---- */
 
 .credit {
-  margin-top: 16px;
-  text-align: center;
+  margin: 0 0 8px;
   color: var(--muted);
   font-size: 0.9rem;
 }
