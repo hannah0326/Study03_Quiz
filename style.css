@@ -276,3 +276,12 @@ button.primary {
   color: var(--muted);
   font-size: 0.95rem;
 }
+
+/* ---- 만든 사람(학번, 이름) ---- */
+
+.credit {
+  margin-top: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
